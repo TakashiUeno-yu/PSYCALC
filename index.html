@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PSYCALC">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0E1016">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -67,8 +67,10 @@ body{font-family:var(--sans);-webkit-tap-highlight-color:transparent;overscroll-
 .ind .f-shift{background:var(--shift-bg);color:#fff}
 .ind .f-m{color:var(--lcd-ink)}
 .ind .sp{flex:1}
-.ind .pastebtn{border:1.5px solid var(--lcd-dim);font-family:var(--sans);font-size:13px;padding:2px 8px}
-.ind .reset{border:1.5px solid var(--lcd-dim);font-family:var(--sans);font-size:13px;padding:2px 8px;margin-left:2px}
+.ind .pastebtn,.ind .reset{border:1.5px solid var(--lcd-dim);font-family:var(--sans);font-size:12px;padding:2px 5px;white-space:nowrap}
+.ind{flex-wrap:nowrap;gap:3px}
+.ind button{padding:2px 4px}
+.ind .pastebtn,.ind .reset{padding:2px 5px}
 .tape{flex:1;overflow-y:auto;padding:0 12px 10px;font-family:var(--mono);user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;overscroll-behavior:contain}
 .ent{padding:3px 4px;border-radius:6px}
 .ent.hi{background:var(--lcd-hi)}
@@ -142,8 +144,8 @@ textarea.paste{font:inherit;font-family:var(--mono);font-size:16px;min-height:80
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--key-ink);color:var(--body);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center}
 .toast.show{opacity:1}
 /* キーは高さに合わせて文字を拡縮（上段=ALT、中央=本体、下段=SHIFT の3段で重ならない） */
-:root{--kh:clamp(44px,6.3vh,64px)}
-@supports (height:1dvh){:root{--kh:clamp(44px,6.3dvh,64px)}}
+:root{--kh:clamp(44px,5.6vh,58px)}
+@supports (height:1dvh){:root{--kh:clamp(44px,5.6dvh,58px)}}
 .k{height:var(--kh);flex-direction:column;align-items:stretch;justify-content:space-between;padding:3px 6px;font-size:calc(var(--kh)*.36)}
 .k .la,.k .ls{position:static;display:block;height:1em;line-height:1;font-size:max(9px,calc(var(--kh)*.19))}
 .k .la{text-align:left}
@@ -171,6 +173,7 @@ textarea.paste{font:inherit;font-family:var(--mono);font-size:16px;min-height:80
       <span class="flag f-m" id="fM">M</span>
       <span class="flag f-alt" id="fAlt">ALT</span>
       <span class="flag f-shift" id="fShift">SHIFT</span>
+      <button type="button" class="pastebtn" id="copyBtn" title="入力中の式（空なら最後の答え）をコピー">COPY</button>
       <button type="button" class="pastebtn" id="pasteBtn" title="クリップボードの式や数値を貼り付け">PASTE</button>
       <button type="button" class="reset" id="resetBtn" title="Normal・DEC・DEG に戻す">↺ RESET</button>
     </div>
@@ -543,7 +546,7 @@ function render(){
        '<div class="ex">'+(e.b!==S.base?'<span class="bt">['+BASENAME[e.b]+"]</span>":"")+exprHTML(e.x)+(e.sample?'<span class="tag">例</span>':"")+"</div>"+
        '<div class="rs">'+result(e)+"</div></div>";
   });
-  let c='<div class="cur" id="cur" contenteditable="true" inputmode="none" spellcheck="false" autocapitalize="off" autocorrect="off" aria-label="入力中の式（長押しでペースト）">';
+  let c='<div class="cur" id="cur" aria-label="入力中の式">';
   tokens.forEach((t,i)=>{
     if(i===cur) c+='<span class="caret"></span>';
     c+='<span class="t'+tokClass(t)+'" data-i="'+i+'">'+tokHTML(t)+"</span>";
@@ -795,10 +798,12 @@ $("pasteBtn").onclick=()=>{
     navigator.clipboard.readText().then(t=>{if(t) doPaste(t);else openSheet("paste")}).catch(()=>openSheet("paste"));
   }else openSheet("paste");
 };
-// 入力行は貼り付けだけ受け付け、直接の書き換えは止める
-$("tape").addEventListener("beforeinput",e=>{if(e.target.closest&&e.target.closest("#cur")) e.preventDefault()});
-$("tape").addEventListener("drop",e=>e.preventDefault());
-$("tape").addEventListener("input",()=>render());
+function exprText(x){return x.map(t=>t==="⁻"?"-":t[0]==="κ"?(CONSTS[t.slice(1)]||{}).l:t).join("")}
+$("copyBtn").onclick=()=>{
+  if(tokens.length){copyText(exprText(tokens));return}
+  const e=lastEntry();if(!e){toast("コピーする式や答えがありません");return}
+  copyText(fmtVal(e.v,e).replace(/（DEC）$/,""));
+};
 $("resetBtn").onclick=()=>{S.fse="Normal";S.base=10;S.drg="DEG";resetView();save();render();toast("Normal・DEC・DEG に戻しました")};
 $("menuBtn").onclick=()=>sheetOpen==="menu"?closeSheet():openSheet("menu");
 
@@ -865,7 +870,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">入力中の行を長押しすると「ペースト」で式や数値を貼り付けられます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+
@@ -909,7 +914,7 @@ $("sheet").addEventListener("click",e=>{
     case "pastego":{const v=$("pasteBox").value;if(v&&doPaste(v)) closeSheet();return}
     case "copyans":{const e=lastEntry();if(!e){toast("まだ答えがありません");return}copyText(fmtVal(e.v,e).replace(/（DEC）$/,""));return}
     case "copyexpr":{const x=tokens.length?tokens:(lastEntry()||{x:[]}).x;if(!x.length){toast("式がありません");return}
-      copyText(x.map(t=>t==="E"?"E":t==="⁻"?"-":t==="²"?"²":t[0]==="κ"?(CONSTS[t.slice(1)]||{}).l:t).join(""));return}
+      copyText(exprText(x));return}
     case "sep": S.sep=!S.sep;save();openSheet("menu");render();return;
     case "clearall":{
       $("confirmArea").innerHTML='<div class="chips" style="margin-top:6px"><span class="note" style="align-self:center">テープをすべて消しますか？</span>'+chip("消す","clearyes")+chip("やめる","clearno")+"</div>";return;

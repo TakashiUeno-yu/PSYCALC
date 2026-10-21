@@ -613,7 +613,7 @@ const KEYS=[
   K("fn",["ln","i:ln("],["e<sup>x</sup>","i:e|^|("],["e","i:e"]),
 
   K("fn",["x<sup>2</sup>","i:²"],["x<sup>-1</sup>","i:⁻¹"],["x<sup>3</sup>","i:³"]),
-  K("fn",["x<sup>y</sup>","i:^"],["<sup>x</sup>√","i:ˣ√("],null),
+  K("fn",["x<sup>y</sup>","i:^|("],["<sup>x</sup>√","i:ˣ√("],null),
   K("fn",["√","i:√("],["<sup>3</sup>√","i:∛("],null),
   K("fn",["π","i:π"],["n!","i:!"],["Ran#","i:Ran#"]),
   K("fn",['<span class="big">° ′ ″</span>',"DMSIN"],["H:M:S⇄","DMS"],null),
@@ -695,8 +695,16 @@ function evalNow(){
   const r=evaluate(tokens,S.base);
   return r;
 }
+// 開いたままのかっこを「=」のときに自動で閉じる（Panecal と同じ）
+function autoClose(){
+  let open=0;
+  for(const t of tokens){if(t.endsWith("(")) open++;else if(t===")"&&open>0) open--}
+  for(let i=0;i<open;i++) tokens.push(")");
+  if(open) cur=tokens.length;
+}
 function commit(){
   if(!tokens.length) return;
+  autoClose();
   let r;
   try{r=evaluate(tokens,S.base)}catch(err){
     const pv=$("prev");if(pv){pv.textContent=err||"式が途中です";pv.className="prev err"}
@@ -907,7 +915,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v2.6（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v2.7（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

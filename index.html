@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-html{height:100%;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+html{height:100%;height:100dvh;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif}
 img{max-width:100%}
 [hidden]{display:none!important}
@@ -57,7 +57,7 @@ body{font-family:var(--sans);-webkit-tap-highlight-color:transparent;overscroll-
 .brand .menu{font:inherit;font-size:13px;font-weight:700;color:var(--brand-ink);background:transparent;border:1.5px solid var(--brand-ink);border-radius:6px;padding:1px 10px;cursor:pointer}
 
 /* LCD */
-.lcd{flex:1 1 auto;min-height:150px;background:var(--lcd);color:var(--lcd-ink);border-radius:12px;display:flex;flex-direction:column;box-shadow:inset 0 2px 6px rgba(0,0,0,.1);overflow:hidden}
+.lcd{flex:1 1 auto;min-height:110px;background:var(--lcd);color:var(--lcd-ink);border-radius:12px;display:flex;flex-direction:column;box-shadow:inset 0 2px 6px rgba(0,0,0,.1);overflow:hidden}
 .ind{display:flex;gap:4px;align-items:center;padding:6px 8px 4px;font-family:var(--mono);font-size:14px;color:var(--lcd-dim);user-select:none;-webkit-user-select:none;flex-wrap:wrap}
 .ind button{font:inherit;color:var(--lcd-ink);background:transparent;border:0;border-radius:5px;padding:2px 6px;cursor:pointer;font-weight:600}
 .ind button:focus-visible{outline:2px solid var(--lcd-ink)}
@@ -141,6 +141,19 @@ textarea.paste{font:inherit;font-family:var(--mono);font-size:16px;min-height:80
 .note{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--key-ink);color:var(--body);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center}
 .toast.show{opacity:1}
+/* キーは高さに合わせて文字を拡縮（上段=ALT、中央=本体、下段=SHIFT の3段で重ならない） */
+:root{--kh:clamp(44px,6.3vh,64px)}
+@supports (height:1dvh){:root{--kh:clamp(44px,6.3dvh,64px)}}
+.k{height:var(--kh);flex-direction:column;align-items:stretch;justify-content:space-between;padding:3px 6px;font-size:calc(var(--kh)*.36)}
+.k .la,.k .ls{position:static;display:block;height:1em;line-height:1;font-size:max(9px,calc(var(--kh)*.19))}
+.k .la{text-align:left}
+.k .ls{text-align:right}
+.k .lm{flex:1;display:flex;align-items:center;justify-content:center;line-height:1;min-height:0}
+.k.num,.k.op{font-size:calc(var(--kh)*.44)}
+.k.eq{font-size:calc(var(--kh)*.5)}
+.k.fn{font-size:calc(var(--kh)*.34)}
+.k.nav{font-size:calc(var(--kh)*.36)}
+.k.ctl,.k.altk,.k.shiftk{font-size:calc(var(--kh)*.3)}
 </style>
 
 <div class="app" id="app">
@@ -618,7 +631,7 @@ function drawPad(){
     else if(shift&&!alt&&k.m[1]!=="SHIFT"){if(k.s){main=k.s[0];sw=true}else dim=true}
     if(dim&&!["SHIFT","ALT"].includes(k.m[1])) b.classList.add("dim");
     if((k.m[1]==="ALT"&&alt)||(k.m[1]==="SHIFT"&&shift)) b.classList.add("on");
-    b.innerHTML=(k.a&&!alt?'<span class="la">'+k.a[0]+"</span>":"")+'<span class="lm'+(sw?" sw":"")+'">'+main+"</span>"+(k.s&&!shift?'<span class="ls">'+k.s[0]+"</span>":"");
+    b.innerHTML='<span class="la">'+(k.a&&!alt?k.a[0]:"")+'</span><span class="lm'+(sw?" sw":"")+'">'+main+'</span><span class="ls">'+(k.s&&!shift?k.s[0]:"")+"</span>";
     b.setAttribute("aria-label",main.replace(/<[^>]+>/g,""));
     pad.appendChild(b);
   });

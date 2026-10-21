@@ -659,8 +659,9 @@ $("pad").addEventListener("click",e=>{
 $("pad").addEventListener("contextmenu",e=>e.preventDefault());
 // ペーストのメニューが出たままでも、キーを押したら閉じてそのキーを効かせる
 function dropPasteFocus(){const a=document.activeElement;if(a&&a.id==="pz"){try{a.blur()}catch(_){}}try{const s=getSelection();if(s&&s.rangeCount&&s.anchorNode&&$("tape").contains(s.anchorNode)) s.removeAllRanges()}catch(_){}}
-$("pad").addEventListener("pointerdown",dropPasteFocus);
-$("pad").addEventListener("touchstart",dropPasteFocus,{passive:true});
+// 貼り付け欄以外（キー・MENU・上のボタンなど）に触れたら、ペーストのメニューを閉じる
+document.addEventListener("pointerdown",e=>{if(e.target.id!=="pz") dropPasteFocus()},true);
+document.addEventListener("touchstart",e=>{if(e.target.id!=="pz") dropPasteFocus()},{passive:true,capture:true});
 
 /* ================= actions ================= */
 const OPLIKE=["+","−","×","÷","^","ˣ√","Mod","nPr","nCr","%","!","²","³","⁻¹","and","or","xor"];
@@ -801,9 +802,10 @@ $("tape").addEventListener("click",e=>{
     histIdx=i;tokens=en.x.slice();cur=tokens.length;afterEq=false;render();
   }
 });
-$("indFse").onclick=()=>act("FSE");
-$("indBase").onclick=()=>{const o=[10,16,8,2];setBase(o[(o.indexOf(S.base)+1)%4])};
-$("indDrg").onclick=()=>act("DRG");
+const refreshMenu=()=>{if(sheetOpen==="menu") openSheet("menu")};
+$("indFse").onclick=()=>{act("FSE");refreshMenu()};
+$("indBase").onclick=()=>{const o=[10,16,8,2];setBase(o[(o.indexOf(S.base)+1)%4]);refreshMenu()};
+$("indDrg").onclick=()=>{act("DRG");refreshMenu()};
 $("pasteBtn").onclick=()=>{
   if(navigator.clipboard&&navigator.clipboard.readText){
     navigator.clipboard.readText().then(t=>{if(t) doPaste(t);else openSheet("paste")}).catch(()=>openSheet("paste"));
@@ -815,7 +817,7 @@ $("copyBtn").onclick=()=>{
   const e=lastEntry();if(!e){toast("コピーする式や答えがありません");return}
   copyText(fmtVal(e.v,e).replace(/（DEC）$/,""));
 };
-$("resetBtn").onclick=()=>{S.fse="Normal";S.base=10;S.drg="DEG";resetView();save();render();toast("Normal・DEC・DEG に戻しました")};
+$("resetBtn").onclick=()=>{S.fse="Normal";S.base=10;S.drg="DEG";resetView();save();render();refreshMenu();toast("Normal・DEC・DEG に戻しました")};
 $("menuBtn").onclick=()=>sheetOpen==="menu"?closeSheet():openSheet("menu");
 
 /* ================= paste ================= */
@@ -886,7 +888,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v1.8（2026-10-21）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v1.9（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

@@ -397,13 +397,21 @@ function evaluate(tk,B){
   }
   function power(){
     const b=postfix();
+    const nroot=(n,x)=>{
+      domain(n===0,"0 乗根は計算できません");
+      if(x<0){domain(!(Number.isInteger(n)&&Math.abs(n)%2===1),"負の数の偶数乗根は計算できません");return -Math.pow(-x,1/n)}
+      return Math.pow(x,1/n);
+    };
+    // nˣ√(x)：かっこの中が根号の中身（Panecal と同じ書き方）
+    if(peek()&&peek().t==="ˣ√("){
+      domain(!D,"進数モードでは使えません");
+      p++;const x=expr();close();return nroot(b,x);
+    }
     if(peek()&&(peek().t==="^"||peek().t==="ˣ√")){
       domain(!D,"進数モードでは使えません");
       const o=next().t,e=unary();
       if(o==="^"){const r=Math.pow(b,e);domain(Number.isNaN(r),"負の数の非整数乗は計算できません");return r}
-      domain(b===0,"0 乗根は計算できません");
-      if(e<0){domain(!(Number.isInteger(b)&&Math.abs(b)%2===1),"負の数の偶数乗根は計算できません");return -Math.pow(-e,1/b)}
-      return Math.pow(e,1/b);
+      return nroot(b,e);  // 旧形式（かっこなし）の履歴も計算できるように残す
     }
     return b;
   }
@@ -605,7 +613,7 @@ const KEYS=[
   K("fn",["ln","i:ln("],["e<sup>x</sup>","i:e|^|("],["e","i:e"]),
 
   K("fn",["x<sup>2</sup>","i:²"],["x<sup>-1</sup>","i:⁻¹"],["x<sup>3</sup>","i:³"]),
-  K("fn",["x<sup>y</sup>","i:^"],["<sup>x</sup>√","i:ˣ√"],null),
+  K("fn",["x<sup>y</sup>","i:^"],["<sup>x</sup>√","i:ˣ√("],null),
   K("fn",["√","i:√("],["<sup>3</sup>√","i:∛("],null),
   K("fn",["π","i:π"],["n!","i:!"],["Ran#","i:Ran#"]),
   K("fn",['<span class="big">° ′ ″</span>',"DMSIN"],["H:M:S⇄","DMS"],null),
@@ -675,7 +683,7 @@ document.addEventListener("pointerdown",e=>{if(e.target.id!=="pz") dropPasteFocu
 document.addEventListener("touchstart",e=>{if(e.target.id!=="pz") dropPasteFocus()},{passive:true,capture:true});
 
 /* ================= actions ================= */
-const OPLIKE=["+","−","×","÷","^","ˣ√","Mod","nPr","nCr","%","!","²","³","⁻¹","and","or","xor"];
+const OPLIKE=["+","−","×","÷","^","ˣ√","ˣ√(","Mod","nPr","nCr","%","!","²","³","⁻¹","and","or","xor"];
 function insert(arr){
   if(afterEq&&!tokens.length&&OPLIKE.includes(arr[0])) arr=["Ans",...arr];
   afterEq=false;
@@ -832,7 +840,7 @@ $("resetBtn").onclick=()=>{S.fse="Normal";S.base=10;S.drg="DEG";resetView();save
 $("menuBtn").onclick=()=>sheetOpen==="menu"?closeSheet():openSheet("menu");
 
 /* ================= paste ================= */
-const PTOK=[...Object.keys(FN1),...FN2,"not(","PreAns","Ans","Ran#","Mod","nPr","nCr","and","xor","or","⁻¹","ˣ√","π","^","×","÷","+","−","(",")",",","!","%","²","³","°","′","″","E","e","M"]
+const PTOK=[...Object.keys(FN1),...FN2,"not(","PreAns","Ans","Ran#","Mod","nPr","nCr","and","xor","or","⁻¹","ˣ√(","ˣ√","π","^","×","÷","+","−","(",")",",","!","%","²","³","°","′","″","E","e","M"]
   .sort((a,b)=>b.length-a.length);
 function parsePaste(text){
   let s=String(text).replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/　/g," ");
@@ -895,11 +903,11 @@ function openSheet(kind){
     b+='<div class="sh-sec"><h3>角度単位（DRG）</h3><div class="chips">'+["DEG","RAD","GRA"].map(f=>chip(f,"drg:"+f,S.drg===f)).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>進数</h3><div class="chips">'+[10,16,8,2].map(f=>chip(BASENAME[f],"base:"+f,S.base===f)).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>関数</h3><div class="chips">'+
-      [["sinh","sinh("],["cosh","cosh("],["tanh","tanh("],["sinh⁻¹","sinh⁻¹("],["cosh⁻¹","cosh⁻¹("],["tanh⁻¹","tanh⁻¹("],["abs","abs("],["int","int("],["frac","frac("],["log₂","log₂("],["gcd","gcd("],["lcm","lcm("],["Pol","Pol("],["Rec","Rec("],["Mod","Mod"],["ˣ√","ˣ√"],["x³","³"],["Ran#","Ran#"],["PreAns","PreAns"],[",",","]]
+      [["sinh","sinh("],["cosh","cosh("],["tanh","tanh("],["sinh⁻¹","sinh⁻¹("],["cosh⁻¹","cosh⁻¹("],["tanh⁻¹","tanh⁻¹("],["abs","abs("],["int","int("],["frac","frac("],["log₂","log₂("],["gcd","gcd("],["lcm","lcm("],["Pol","Pol("],["Rec","Rec("],["Mod","Mod"],["ˣ√","ˣ√("],["x³","³"],["Ran#","Ran#"],["PreAns","PreAns"],[",",","]]
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v2.5（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v2.6（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

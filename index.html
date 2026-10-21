@@ -660,6 +660,12 @@ $("pad").addEventListener("contextmenu",e=>e.preventDefault());
 // ペーストのメニューが出たままでも、キーを押したら閉じてそのキーを効かせる
 function dropPasteFocus(){const a=document.activeElement;if(a&&a.id==="pz"){try{a.blur()}catch(_){}}try{const s=getSelection();if(s&&s.rangeCount&&s.anchorNode&&$("tape").contains(s.anchorNode)) s.removeAllRanges()}catch(_){}}
 // 貼り付け欄以外（キー・MENU・上のボタンなど）に触れたら、ペーストのメニューを閉じる
+// iPhone は入力欄にフォーカスすると画面を少しずらすことがあり、タップ位置とキーがずれる。常に元の位置に戻す
+function resetViewport(){try{if(window.scrollX||window.scrollY) window.scrollTo(0,0);const se=document.scrollingElement;if(se&&(se.scrollTop||se.scrollLeft)){se.scrollTop=0;se.scrollLeft=0}if(document.body.scrollTop) document.body.scrollTop=0}catch(_){}}
+document.addEventListener("focusin",()=>{resetViewport();setTimeout(resetViewport,60);setTimeout(resetViewport,300)});
+document.addEventListener("focusout",()=>{resetViewport();setTimeout(resetViewport,60);setTimeout(resetViewport,300)});
+window.addEventListener("scroll",resetViewport,{passive:true});
+if(window.visualViewport){visualViewport.addEventListener("scroll",resetViewport);visualViewport.addEventListener("resize",resetViewport)}
 document.addEventListener("pointerdown",e=>{if(e.target.id!=="pz") dropPasteFocus()},true);
 document.addEventListener("touchstart",e=>{if(e.target.id!=="pz") dropPasteFocus()},{passive:true,capture:true});
 
@@ -888,7 +894,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v1.9（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v2.0（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

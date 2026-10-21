@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PSYCALC</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PSYCALC">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E1016">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+html{height:100%;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Stardos+Stencil:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen app — brand strip, LCD paper-tape (history + editing line), 5x8 keypad; sheets replace the keypad */
+:root{
+  --bg:#E3E6EC; --body:#F4F5F8; --lcd:#C9D6BE; --lcd-ink:#15211A; --lcd-dim:#566B5C; --lcd-hi:#AFC2A3;
+  --key:#FFFFFF; --key-ink:#1D2230; --fn:#E7EAF3; --fn-ink:#2F3A5C; --nav:#D9DDE7;
+  --accent:#3A4CB5; --accent-ink:#FFFFFF; --clr:#C2412E; --line:#CDD2DC; --muted:#6A7186;
+  --alt:#A86A00; --alt-bg:#E9B44C; --shift:#0D7A70; --shift-bg:#3E9E92;
+  --brand-ink:#111111;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --logo:"Stardos Stencil","Stencil","Stencil Std","Rockwell Extra Bold",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1016; --body:#171A23; --lcd:#1B2620; --lcd-ink:#CDEBD5; --lcd-dim:#7F9C89; --lcd-hi:#2A3B31;
+  --key:#232836; --key-ink:#E6E9F2; --fn:#1D2130; --fn-ink:#C3CBEA; --nav:#2A3040;
+  --accent:#6F82F0; --accent-ink:#0B0E1A; --clr:#F0735F; --line:#2C3242; --muted:#8C93A8;
+  --alt:#F2B630; --alt-bg:#D9A23A; --shift:#4CC9B9; --shift-bg:#2E8A80; --brand-ink:#F1F2F6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1016; --body:#171A23; --lcd:#1B2620; --lcd-ink:#CDEBD5; --lcd-dim:#7F9C89; --lcd-hi:#2A3B31;
+  --key:#232836; --key-ink:#E6E9F2; --fn:#1D2130; --fn-ink:#C3CBEA; --nav:#2A3040;
+  --accent:#6F82F0; --accent-ink:#0B0E1A; --clr:#F0735F; --line:#2C3242; --muted:#8C93A8;
+  --alt:#F2B630; --alt-bg:#D9A23A; --shift:#4CC9B9; --shift-bg:#2E8A80; --brand-ink:#F1F2F6; color-scheme:dark}
+html,body{height:100%;background:var(--bg);color:var(--key-ink)}
+body{font-family:var(--sans);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+.app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:6px;padding-block:6px 8px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));box-sizing:border-box}
+@media (min-width:420px){.app{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+
+/* brand */
+.brand{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 4px;user-select:none;-webkit-user-select:none}
+.logo{font-family:var(--logo);font-weight:700;font-size:30px;letter-spacing:.01em;color:var(--brand-ink);line-height:1.05;}
+.logo-unused{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.75'/%3E%3C/filter%3E%3Crect width='120' height='40' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.75'/%3E%3C/filter%3E%3Crect width='120' height='40' filter='url(%23n)'/%3E%3C/svg%3E")}
+.brand .menu{font:inherit;font-size:13px;font-weight:700;color:var(--brand-ink);background:transparent;border:1.5px solid var(--brand-ink);border-radius:6px;padding:1px 10px;cursor:pointer}
+
+/* LCD */
+.lcd{flex:1 1 auto;min-height:150px;background:var(--lcd);color:var(--lcd-ink);border-radius:12px;display:flex;flex-direction:column;box-shadow:inset 0 2px 6px rgba(0,0,0,.1);overflow:hidden}
+.ind{display:flex;gap:4px;align-items:center;padding:6px 8px 4px;font-family:var(--mono);font-size:14px;color:var(--lcd-dim);user-select:none;-webkit-user-select:none;flex-wrap:wrap}
+.ind button{font:inherit;color:var(--lcd-ink);background:transparent;border:0;border-radius:5px;padding:2px 6px;cursor:pointer;font-weight:600}
+.ind button:focus-visible{outline:2px solid var(--lcd-ink)}
+.ind .flag{font-weight:600;padding:0 4px;border-radius:4px;display:none}
+.ind .flag.on{display:inline}
+.ind .f-alt{background:var(--alt-bg);color:#1a1200}
+.ind .f-shift{background:var(--shift-bg);color:#fff}
+.ind .f-m{color:var(--lcd-ink)}
+.ind .sp{flex:1}
+.ind .pastebtn{border:1.5px solid var(--lcd-dim);font-family:var(--sans);font-size:13px;padding:2px 8px}
+.ind .reset{border:1.5px solid var(--lcd-dim);font-family:var(--sans);font-size:13px;padding:2px 8px;margin-left:2px}
+.tape{flex:1;overflow-y:auto;padding:0 12px 10px;font-family:var(--mono);user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;overscroll-behavior:contain}
+.ent{padding:3px 4px;border-radius:6px}
+.ent.hi{background:var(--lcd-hi)}
+.ent.sample{opacity:.55}
+.ex{font-size:20px;line-height:1.4;word-break:break-all;cursor:pointer}
+.ex .bt{font-size:11px;color:var(--lcd-dim);margin-right:6px}
+.ex .tag{font-family:var(--sans);font-size:10px;border:1px solid var(--lcd-dim);color:var(--lcd-dim);border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:2px}
+.rs{font-size:28px;font-weight:500;line-height:1.35;word-break:break-all;cursor:pointer;font-variant-numeric:tabular-nums}
+.rs.err{font-family:var(--sans);font-size:15px;color:var(--clr)}
+.rs .sub{font-size:18px;color:var(--lcd-dim);display:block}
+.cur{caret-color:transparent;outline:none;-webkit-user-select:text;user-select:text;font-size:26px;line-height:1.45;word-break:break-all;cursor:text;min-height:1.45em;padding:3px 4px;border-top:1px dashed var(--lcd-dim);margin-top:4px}
+.cur .t{padding:0 .5px}
+.cur .fnt{font-weight:600}
+.cur .kc{font-style:italic;font-weight:600}
+.cur sup,.ex sup{font-size:.62em}
+.caret{display:inline-block;width:2px;height:1.1em;background:var(--lcd-ink);vertical-align:-0.18em;margin:0 -1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
+.prev{font-size:20px;color:var(--lcd-dim);min-height:1.4em;padding:0 4px;word-break:break-all;font-variant-numeric:tabular-nums}
+.prev.err{font-family:var(--sans);font-size:14px;color:var(--clr)}
+
+/* keypad */
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;flex:0 0 auto;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.k{font:inherit;font-family:var(--mono);font-size:20px;border:0;border-radius:9px;height:clamp(40px,6.2vh,62px);cursor:pointer;background:var(--key);color:var(--key-ink);box-shadow:0 1px 0 var(--line);position:relative;touch-action:manipulation;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;display:flex;align-items:center;justify-content:center}
+.k *{-webkit-user-select:none;user-select:none;pointer-events:none}
+.k:active{transform:translateY(1px);filter:brightness(.92)}
+.k:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.k .lm{display:inline-block;white-space:nowrap;line-height:1}
+.k .lm.sw{font-size:.86em}
+.k .la{position:absolute;top:2px;left:5px;font-size:11.5px;color:var(--alt);font-weight:600;white-space:nowrap}
+.k .ls{position:absolute;bottom:2px;right:5px;font-size:11.5px;color:var(--shift);font-weight:600;white-space:nowrap}
+.k sup{font-size:.6em}
+.k.fn{background:var(--fn);color:var(--fn-ink);font-size:19px}
+.k.nav{background:var(--nav);color:var(--fn-ink);font-size:20px}
+.k.num{font-size:26px}
+.k.op{color:var(--accent);font-weight:600;font-size:26px}
+.k.eq{background:var(--accent);color:var(--accent-ink);font-size:30px;font-weight:600}
+.k.ctl{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--fn-ink);font-size:17px;font-weight:600}
+.k .bsg{font-family:var(--sans);font-size:1.25em;margin-right:3px;vertical-align:-0.08em}
+.k.altk,.k.shiftk{font-size:17px;font-weight:600}
+.k.altk{background:var(--alt-bg);color:#1a1200;box-shadow:none}
+.k.shiftk{background:var(--shift-bg);color:#fff;box-shadow:none}
+.k.clrk{color:var(--clr)}
+.k.on{outline:3px solid var(--key-ink);outline-offset:-3px}
+.k.dim{opacity:.35}
+.mode-alt .k .lm.sw{color:var(--alt)}
+.mode-shift .k .lm.sw{color:var(--shift)}
+
+/* sheets (replace keypad) */
+.sheet{flex:0 0 auto;background:var(--body);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.sh-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px;font-weight:700;gap:8px}
+.sh-head button,.btnx{font:inherit;font-size:13px;font-weight:500;background:var(--fn);border:1px solid var(--line);border-radius:8px;padding:5px 12px;color:var(--key-ink);cursor:pointer}
+.sh-body{overflow-y:auto;padding:10px 14px 14px;display:grid;gap:14px}
+.sh-sec{display:grid;gap:6px}
+.sh-sec h3{margin:0;font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-family:var(--mono);font-size:14px;padding:7px 11px;border-radius:8px;border:1px solid var(--line);background:var(--key);color:var(--key-ink);cursor:pointer;min-height:36px}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.chip small{font-family:var(--sans);font-size:11px;color:var(--muted);margin-left:4px}
+.chip.on small{color:inherit}
+.list{list-style:none;margin:0;padding:0;display:grid}
+.list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.list .main{all:unset;cursor:pointer;min-width:0;display:grid;gap:2px}
+.list .main:focus-visible{outline:2px solid var(--accent);border-radius:4px}
+.list .a{font-family:var(--mono);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .b{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{color:var(--muted);font-size:13px;padding:12px 0}
+textarea.paste{font:inherit;font-family:var(--mono);font-size:16px;min-height:80px;padding:10px;border-radius:10px;border:1px dashed var(--accent);background:var(--key);color:var(--key-ink);resize:vertical;width:100%;box-sizing:border-box}
+.note{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--key-ink);color:var(--body);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}
+</style>
+
+<div class="app" id="app">
+  <header class="brand">
+    <span class="logo" aria-label="PSYCALC">PSYCALC</span>
+    <button class="menu" type="button" id="menuBtn">MENU ≡</button>
+  </header>
+
+  <section class="lcd" aria-label="表示">
+    <div class="ind">
+      <button type="button" id="indFse" title="表示形式（FSE）">Normal</button>
+      <button type="button" id="indBase" title="進数">DEC</button>
+      <button type="button" id="indDrg" title="角度単位（DRG）">[DEG]</button>
+      <span class="sp"></span>
+      <span class="flag f-m" id="fM">M</span>
+      <span class="flag f-alt" id="fAlt">ALT</span>
+      <span class="flag f-shift" id="fShift">SHIFT</span>
+      <button type="button" class="pastebtn" id="pasteBtn" title="クリップボードの式や数値を貼り付け">PASTE</button>
+      <button type="button" class="reset" id="resetBtn" title="Normal・DEC・DEG に戻す">↺ RESET</button>
+    </div>
+    <div class="tape" id="tape" aria-live="polite"></div>
+  </section>
+
+  <section class="sheet" id="sheet" hidden></section>
+  <section class="pad" id="pad" aria-label="キー"></section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+
+/* ================= state ================= */
+const STORE="psycalc.v1";
+let S={fse:"Normal",digs:5,drg:"DEG",base:10,sep:false};
+let tape=[];               // {x:[tokens], b:base, v:value(Number|BigInt), ex:extra, eng:0, dms:false, sample?}
+let ans=0, preAns=0, mem=0;
+let tokens=[], cur=0, alt=false, shift=false, afterEq=false, histIdx=null, draft=null, sheetOpen=null;
+
+const enc=v=>typeof v==="bigint"?{b:v.toString()}:v;
+const dec_=v=>v&&typeof v==="object"&&"b" in v?BigInt(v.b):v;
+function save(){
+  try{localStorage.setItem(STORE,JSON.stringify({S,ans:enc(ans),preAns:enc(preAns),mem:enc(mem),
+    tape:tape.filter(e=>!e.sample).slice(-200).map(e=>({x:e.x,b:e.b,v:enc(e.v),ex:e.ex||null}))}))}catch(e){}
+}
+function load(){
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem(STORE)||"null")}catch(e){}
+  if(d){
+    Object.assign(S,d.S||{});ans=dec_(d.ans)??0;preAns=dec_(d.preAns)??0;mem=dec_(d.mem)??0;
+    tape=(d.tape||[]).map(e=>({x:e.x,b:e.b,v:dec_(e.v),ex:e.ex,eng:0,dms:false}));
+    return;
+  }
+  // 旧「式エディット電卓」の履歴を引き継ぐ
+  try{
+    const h=JSON.parse(localStorage.getItem("shikiden.hist")||"[]");
+    if(Array.isArray(h)&&h.length){
+      tape=h.slice(0,200).reverse().filter(e=>Array.isArray(e.x)&&typeof e.v==="number").map(e=>({x:e.x,b:10,v:e.v,eng:0,dms:false}));
+      const dg=localStorage.getItem("shikiden.deg");if(dg==="0")S.drg="RAD";
+      return;
+    }
+  }catch(e){}
+  tape=[];
+}
+
+/* ================= math tables ================= */
+const CONSTS={
+  c:{v:299792458,l:"c",n:"真空中の光速",u:"m/s"},
+  h:{v:6.62607015e-34,l:"h",n:"プランク定数",u:"J·s"},
+  hb:{v:1.054571817e-34,l:"ħ",n:"換算プランク定数",u:"J·s"},
+  q:{v:1.602176634e-19,l:"qₑ",n:"電気素量",u:"C"},
+  me:{v:9.1093837015e-31,l:"mₑ",n:"電子の質量",u:"kg"},
+  mp:{v:1.67262192369e-27,l:"mₚ",n:"陽子の質量",u:"kg"},
+  mn:{v:1.67492749804e-27,l:"mₙ",n:"中性子の質量",u:"kg"},
+  u:{v:1.66053906660e-27,l:"u",n:"原子質量単位",u:"kg"},
+  NA:{v:6.02214076e23,l:"Nₐ",n:"アボガドロ定数",u:"1/mol"},
+  k:{v:1.380649e-23,l:"k",n:"ボルツマン定数",u:"J/K"},
+  R:{v:8.314462618,l:"R",n:"気体定数",u:"J/(mol·K)"},
+  F:{v:96485.33212,l:"F",n:"ファラデー定数",u:"C/mol"},
+  G:{v:6.67430e-11,l:"G",n:"万有引力定数",u:"m³/(kg·s²)"},
+  g:{v:9.80665,l:"g",n:"標準重力加速度",u:"m/s²"},
+  e0:{v:8.8541878128e-12,l:"ε₀",n:"真空の誘電率",u:"F/m"},
+  mu0:{v:1.25663706212e-6,l:"μ₀",n:"真空の透磁率",u:"N/A²"},
+  sig:{v:5.670374419e-8,l:"σ",n:"ステファン＝ボルツマン定数",u:"W/(m²·K⁴)"},
+  a0:{v:5.29177210903e-11,l:"a₀",n:"ボーア半径",u:"m"},
+  Rinf:{v:10973731.568160,l:"R∞",n:"リュードベリ定数",u:"1/m"},
+  Vm:{v:22.41396954e-3,l:"Vm",n:"理想気体のモル体積（0℃,1atm）",u:"m³/mol"},
+  atm:{v:101325,l:"atm",n:"標準大気圧",u:"Pa"},
+  T0:{v:273.15,l:"T₀",n:"0℃の絶対温度",u:"K"}
+};
+const toRad=x=>S.drg==="DEG"?x*Math.PI/180:S.drg==="GRA"?x*Math.PI/200:x;
+const fromRad=x=>S.drg==="DEG"?x*180/Math.PI:S.drg==="GRA"?x*200/Math.PI:x;
+const snap=v=>Math.abs(v)<1e-15?0:v;
+function domain(cond,msg){if(cond) throw msg}
+const FN1={
+  "sin(":x=>snap(Math.sin(toRad(x))),
+  "cos(":x=>snap(Math.cos(toRad(x))),
+  "tan(":x=>{
+    if(S.drg==="DEG") domain(Math.abs((((x%180)+180)%180)-90)<1e-12,"tan の定義域外です");
+    if(S.drg==="GRA") domain(Math.abs((((x%200)+200)%200)-100)<1e-12,"tan の定義域外です");
+    return snap(Math.tan(toRad(x)))},
+  "sin⁻¹(":x=>{domain(x<-1||x>1,"sin⁻¹ は −1〜1 の範囲のみ");return fromRad(Math.asin(x))},
+  "cos⁻¹(":x=>{domain(x<-1||x>1,"cos⁻¹ は −1〜1 の範囲のみ");return fromRad(Math.acos(x))},
+  "tan⁻¹(":x=>fromRad(Math.atan(x)),
+  "sinh(":Math.sinh,"cosh(":Math.cosh,"tanh(":Math.tanh,
+  "sinh⁻¹(":Math.asinh,
+  "cosh⁻¹(":x=>{domain(x<1,"cosh⁻¹ は 1 以上のみ");return Math.acosh(x)},
+  "tanh⁻¹(":x=>{domain(x<=-1||x>=1,"tanh⁻¹ は −1〜1（両端を除く）のみ");return Math.atanh(x)},
+  "log(":x=>{domain(x<=0,"log は正の数のみ");return Math.log10(x)},
+  "ln(":x=>{domain(x<=0,"ln は正の数のみ");return Math.log(x)},
+  "log₂(":x=>{domain(x<=0,"log₂ は正の数のみ");return Math.log2(x)},
+  "√(":x=>{domain(x<0,"√ は 0 以上のみ");return Math.sqrt(x)},
+  "∛(":Math.cbrt,
+  "abs(":Math.abs,
+  "int(":Math.trunc,
+  "frac(":x=>x-Math.trunc(x)
+};
+const FN2=["Pol(","Rec(","gcd(","lcm("];
+const POSTFIX=["!","%","²","³","⁻¹"];
+const DMS=["°","′","″"];
+function fact(n){domain(!Number.isInteger(n)||n<0,"n! は 0 以上の整数のみ");if(n>170) return Infinity;let r=1;for(let i=2;i<=n;i++)r*=i;return r}
+function comb(n,r,perm){
+  domain(!Number.isInteger(n)||!Number.isInteger(r)||n<0||r<0,"nPr・nCr は 0 以上の整数のみ");
+  if(r>n) return 0;let v=1;
+  if(perm){for(let i=0;i<r;i++)v*=(n-i);return v}
+  r=Math.min(r,n-r);for(let i=1;i<=r;i++)v=v*(n-r+i)/i;return Math.round(v);
+}
+const gcdf=(a,b)=>{while(b){[a,b]=[b,a%b]}return a};
+const BASENAME={10:"DEC",16:"HEX",8:"OCT",2:"BIN"};
+
+/* ================= evaluator (no eval) ================= */
+function lex(tk,B){
+  const out=[];let i=0;
+  while(i<tk.length){
+    const t=tk[i];
+    if(B===10&&/^[0-9.]$/.test(t)){
+      let s="";while(i<tk.length&&/^[0-9.]$/.test(tk[i]))s+=tk[i++];
+      domain((s.match(/\./g)||[]).length>1,"小数点が2つあります");
+      domain(s===".","数値が不正です");
+      if(tk[i]==="E"){
+        i++;let sg="";
+        if(tk[i]==="−"||tk[i]==="⁻"||tk[i]==="+"){sg=tk[i]==="+"?"":"-";i++}
+        let d="";while(i<tk.length&&/^[0-9]$/.test(tk[i]))d+=tk[i++];
+        domain(!d,"EXP の後に指数を入れてください");
+        s+="e"+sg+d;
+      }
+      out.push({t:"num",v:parseFloat(s)});continue;
+    }
+    if(B!==10&&/^[0-9A-F]$/.test(t)){
+      let s="";
+      while(i<tk.length&&/^[0-9A-F]$/.test(tk[i])){
+        domain(parseInt(tk[i],16)>=B,BASENAME[B]+" では「"+tk[i]+"」は使えません");
+        s+=tk[i++];
+      }
+      out.push({t:"num",v:BigInt((B===16?"0x":B===8?"0o":"0b")+s)});continue;
+    }
+    domain(B===10&&/^[A-F]$/.test(t),"A〜F は HEX モードで使います");
+    domain(B!==10&&t===".","進数モードでは小数は使えません");
+    domain(t==="E","EXP の前に数値が必要です");
+    out.push({t});i++;
+  }
+  if(B!==10) return out;
+  // 度分秒をひとつの数値にまとめる
+  const DIV={"°":1,"′":60,"″":3600},r=[];
+  for(let j=0;j<out.length;j++){
+    const x=out[j];
+    if(x.t==="num"&&out[j+1]&&DIV[out[j+1].t]){
+      let val=0,k=j,last=0;
+      while(out[k]&&out[k].t==="num"&&out[k+1]&&DIV[out[k+1].t]&&DIV[out[k+1].t]>last){val+=out[k].v/DIV[out[k+1].t];last=DIV[out[k+1].t];k+=2}
+      r.push({t:"num",v:val});j=k-1;
+    }else{domain(DMS.includes(x.t),"度分秒の記号の前に数値が必要です");r.push(x)}
+  }
+  return r;
+}
+function isFnTok(t){return !!FN1[t]||FN2.includes(t)||t==="not("}
+function startsPrimary(x){return x&&(x.t==="num"||x.t==="("||isFnTok(x.t)||["π","e","Ans","PreAns","M","Ran#"].includes(x.t)||x.t[0]==="κ")}
+function evaluate(tk,B){
+  const D=B===10;
+  const L=lex(tk,B);let p=0,extra=null;
+  const peek=()=>L[p],next=()=>L[p++];
+  function close(){if(peek()&&peek().t===")"){p++;return}if(p<L.length) throw "かっこが合いません"}
+  function args(n,name){const a=[expr()];while(peek()&&peek().t===","){p++;a.push(expr())}close();domain(a.length!==n,name+" は値を "+n+" つ「,」で区切って入れます");return a}
+  function val(x){
+    if(D) return typeof x==="bigint"?Number(x):x;
+    if(typeof x==="bigint") return x;
+    domain(!Number.isInteger(x),"小数の値は進数モードでは使えません");
+    return BigInt(x);
+  }
+  function primary(){
+    const x=next();
+    if(!x) throw "式が途中です";
+    if(x.t==="num") return x.v;
+    if(x.t==="("){const v=expr();close();return v}
+    if(x.t==="Ans") return val(ans);
+    if(x.t==="PreAns") return val(preAns);
+    if(x.t==="M") return val(mem);
+    if(x.t===")") throw "かっこが合いません";
+    if(!D){
+      if(x.t==="not("){const v=expr();close();return ~v}
+      throw "進数モードでは「"+x.t.replace("(","")+"」は使えません";
+    }
+    if(x.t==="not(") throw "not は進数モードで使います";
+    if(x.t==="π") return Math.PI;
+    if(x.t==="e") return Math.E;
+    if(x.t==="Ran#") return Math.floor(Math.random()*1000)/1000;
+    if(x.t[0]==="κ"){const c=CONSTS[x.t.slice(1)];if(c) return c.v}
+    if(FN1[x.t]){const v=expr();close();return FN1[x.t](v)}
+    if(x.t==="Pol("){const[a,b]=args(2,"Pol");const r=Math.hypot(a,b),th=fromRad(Math.atan2(b,a));extra={k:"pol",a:r,b:th};return r}
+    if(x.t==="Rec("){const[r,t]=args(2,"Rec");const X=snap(r*Math.cos(toRad(t))),Y=snap(r*Math.sin(toRad(t)));extra={k:"rec",a:X,b:Y};return X}
+    if(x.t==="gcd("||x.t==="lcm("){
+      const[a,b]=args(2,x.t.slice(0,3));
+      domain(!Number.isInteger(a)||!Number.isInteger(b),"gcd・lcm は整数のみ");
+      const g=gcdf(Math.abs(a),Math.abs(b));
+      return x.t==="gcd("?g:(g?Math.abs(a*b)/g:0);
+    }
+    throw "式が途中です";
+  }
+  function postfix(){
+    let v=primary();
+    while(peek()&&POSTFIX.includes(peek().t)){
+      domain(!D,"進数モードでは使えません");
+      const o=next().t;
+      if(o==="!")v=fact(v);else if(o==="%")v=v/100;else if(o==="²")v=v*v;else if(o==="³")v=v*v*v;
+      else{domain(v===0,"0 の逆数は計算できません");v=1/v}
+    }
+    return v;
+  }
+  function power(){
+    const b=postfix();
+    if(peek()&&(peek().t==="^"||peek().t==="ˣ√")){
+      domain(!D,"進数モードでは使えません");
+      const o=next().t,e=unary();
+      if(o==="^"){const r=Math.pow(b,e);domain(Number.isNaN(r),"負の数の非整数乗は計算できません");return r}
+      domain(b===0,"0 乗根は計算できません");
+      if(e<0){domain(!(Number.isInteger(b)&&Math.abs(b)%2===1),"負の数の偶数乗根は計算できません");return -Math.pow(-e,1/b)}
+      return Math.pow(e,1/b);
+    }
+    return b;
+  }
+  function unary(){
+    const x=peek();
+    if(x&&(x.t==="−"||x.t==="⁻")){p++;return -unary()}
+    if(x&&x.t==="+"){p++;return unary()}
+    return power();
+  }
+  function term(){
+    let v=unary();
+    for(;;){
+      const x=peek();if(!x) break;
+      if(x.t==="×"){p++;v=v*unary()}
+      else if(x.t==="÷"){p++;const r=unary();domain(D?r===0:r===0n,"0 で割っています");v=v/r}
+      else if(x.t==="Mod"){p++;const r=unary();domain(D?r===0:r===0n,"0 で割っています");v=v%r}
+      else if(x.t==="nPr"||x.t==="nCr"){domain(!D,"進数モードでは使えません");p++;v=comb(v,unary(),x.t==="nPr")}
+      else if(startsPrimary(x)){v=v*unary()}
+      else break;
+    }
+    return v;
+  }
+  function arith(){
+    let v=term();
+    while(peek()&&(peek().t==="+"||peek().t==="−")){const o=next().t,r=term();v=o==="+"?v+r:v-r}
+    return v;
+  }
+  function expr(){
+    let v=arith();
+    while(peek()&&["and","or","xor"].includes(peek().t)){
+      domain(D,"and・or・xor は進数モードで使います");
+      const o=next().t,r=arith();v=o==="and"?v&r:o==="or"?v|r:v^r;
+    }
+    return v;
+  }
+  if(!L.length) throw "";
+  const v=expr();
+  if(p<L.length) throw peek().t===")"?"かっこが合いません":"式が途中です";
+  if(D) domain(!Number.isFinite(v),"桁あふれです");
+  return {v,extra};
+}
+
+/* ================= formatting ================= */
+const sigN=()=>S.digs===0?10:S.digs;
+function group(s){
+  if(!S.sep) return s;
+  const neg=s[0]==="-";if(neg)s=s.slice(1);
+  const[i,f]=s.split(".");
+  return (neg?"-":"")+i.replace(/\B(?=(\d{3})+(?!\d))/g,",")+(f!==undefined?"."+f:"");
+}
+function sci(v,n,trim){
+  let[m,e]=v.toExponential(Math.max(0,n-1)).split("e");
+  if(trim&&m.includes(".")) m=m.replace(/\.?0+$/,"");
+  return m+"E"+(+e);
+}
+function engFmt(v,shift,n){
+  if(v===0) return "0";
+  const e0=+v.toExponential(14).split("e")[1];
+  const e=Math.floor(e0/3)*3+3*shift;
+  const m=v/Math.pow(10,e);
+  let ms=n?m.toPrecision(Math.max(n,1)):String(+m.toPrecision(15));
+  if(!n&&ms.includes("e")) ms=String(+m.toPrecision(15));
+  if(n&&ms.includes("e")) ms=String(+m.toPrecision(n));
+  return ms+"E"+e;
+}
+function fmtNum(v,eng){
+  if(!Number.isFinite(v)) return "Error";
+  if(eng) return engFmt(v,eng,S.fse==="Eng"?sigN():0);
+  const a=Math.abs(v);
+  switch(S.fse){
+    case "Fix": return a>=1e15||(a!==0&&a<1e-9&&+v.toFixed(S.digs)===0&&false)?sci(v,10,true):group(v.toFixed(S.digs));
+    case "Sci": return sci(v,sigN(),false);
+    case "Eng": return engFmt(v,0,sigN());
+    default:
+      if(v===0) return "0";
+      if(a>=1e15||a<1e-9) return sci(v,15,true);
+      return group(String(+v.toPrecision(15)));
+  }
+}
+function fmtDMS(v){
+  const neg=v<0;let a=Math.abs(v);
+  let d=Math.floor(a),mm=Math.floor((a-d)*60),s=(a-d-mm/60)*3600;
+  s=+s.toFixed(6);
+  if(s>=60){s-=60;mm++} if(mm>=60){mm-=60;d++}
+  return (neg?"-":"")+d+"°"+mm+"′"+String(+s.toPrecision(12))+"″";
+}
+function fmtVal(v,e){
+  e=e||{};
+  if(typeof v==="bigint"){
+    if(S.base===10) return group(v.toString());
+    return (v<0n?"-":"")+(v<0n?-v:v).toString(S.base).toUpperCase();
+  }
+  if(S.base!==10){
+    if(Number.isInteger(v)&&Math.abs(v)<=Number.MAX_SAFE_INTEGER){const b=BigInt(v);return (b<0n?"-":"")+(b<0n?-b:b).toString(S.base).toUpperCase()}
+    return fmtNum(v,0)+"（DEC）";
+  }
+  if(e.dms) return fmtDMS(v);
+  return fmtNum(v,e.eng||0);
+}
+function rawVal(v){ // 式に挿入する形
+  if(typeof v==="bigint"||S.base!==10){
+    let b;try{b=typeof v==="bigint"?v:BigInt(Math.trunc(v))}catch(_){return null}
+    if(S.base===10) return b.toString();
+    return (b<0n?"-":"")+(b<0n?-b:b).toString(S.base).toUpperCase();
+  }
+  if(!Number.isFinite(v)) return null;
+  let s=String(+v.toPrecision(15));
+  if(s.includes("e")){const[m,e]=s.split("e");s=m+"E"+(+e)}
+  return s;
+}
+function strToTokens(s){
+  const out=[];
+  for(let i=0;i<s.length;i++){
+    const c=s[i];
+    if(c==="-") out.push(out.length&&out[out.length-1]==="E"?"−":"⁻");
+    else if(c==="+") continue;
+    else out.push(c);
+  }
+  return out;
+}
+
+/* ================= token display ================= */
+const OPSP={"Mod":" Mod ","nPr":"P","nCr":"C","and":" and ","or":" or ","xor":" xor ","ˣ√":"ˣ√"};
+function tokHTML(t){
+  if(t==="²") return "<sup>2</sup>";
+  if(t==="³") return "<sup>3</sup>";
+  if(t==="⁻¹") return "<sup>−1</sup>";
+  if(t==="E") return "ᴇ";
+  if(t==="⁻") return "-";
+  if(t==="PreAns") return "PreAns";
+  if(t[0]==="κ"){const c=CONSTS[t.slice(1)];return '<span class="kc">'+(c?c.l:"?")+"</span>"}
+  if(OPSP[t]) return OPSP[t];
+  return t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+}
+const tokClass=t=>isFnTok(t)||["Ans","PreAns","Ran#","M"].includes(t)?" fnt":"";
+const exprHTML=x=>x.map(tokHTML).join("");
+
+/* ================= render ================= */
+function result(e){
+  let s=fmtVal(e.v,e);
+  if(e.ex&&e.b===10&&S.base===10){
+    const a=fmtNum(e.ex.a,0),b=fmtNum(e.ex.b,0);
+    return e.ex.k==="pol"?"r="+a+'<span class="sub">θ='+b+"</span>":"x="+a+'<span class="sub">y='+b+"</span>";
+  }
+  return "="+s;
+}
+function render(){
+  const tp=$("tape");let h="";
+  tape.forEach((e,i)=>{
+    h+='<div class="ent'+(i===histIdx?" hi":"")+(e.sample?" sample":"")+'" data-i="'+i+'">'+
+       '<div class="ex">'+(e.b!==S.base?'<span class="bt">['+BASENAME[e.b]+"]</span>":"")+exprHTML(e.x)+(e.sample?'<span class="tag">例</span>':"")+"</div>"+
+       '<div class="rs">'+result(e)+"</div></div>";
+  });
+  let c='<div class="cur" id="cur" contenteditable="true" inputmode="none" spellcheck="false" autocapitalize="off" autocorrect="off" aria-label="入力中の式（長押しでペースト）">';
+  tokens.forEach((t,i)=>{
+    if(i===cur) c+='<span class="caret"></span>';
+    c+='<span class="t'+tokClass(t)+'" data-i="'+i+'">'+tokHTML(t)+"</span>";
+  });
+  if(cur===tokens.length) c+='<span class="caret"></span>';
+  c+="</div>";
+  let pv="",pe=false;
+  if(tokens.length&&!tokens.includes("Ran#")){
+    try{const r=evaluate(tokens,S.base);const only=tokens.every(t=>/^[0-9.A-F]$/.test(t));if(!only) pv="= "+fmtVal(r.v,{})}
+    catch(err){if(err&&!/途中|かっこ/.test(err)){pv=err;pe=true}}
+  }
+  tp.innerHTML=h+c+'<div class="prev'+(pe?" err":"")+'" id="prev">'+pv+"</div>";
+  if(histIdx!==null){const hi=tp.querySelector(".ent.hi");if(hi) hi.scrollIntoView({block:"nearest"})}
+  else tp.scrollTop=tp.scrollHeight;
+  $("indFse").textContent=S.fse==="Normal"?"Normal":S.fse+" "+S.digs;
+  $("indBase").textContent=BASENAME[S.base];
+  $("indDrg").textContent="["+S.drg+"]";
+  $("fAlt").classList.toggle("on",alt);
+  $("fShift").classList.toggle("on",shift);
+  const mz=typeof mem==="bigint"?mem!==0n:mem!==0;
+  $("fM").classList.toggle("on",mz);
+}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),1800)}
+
+/* ================= keys ================= */
+// [main, alt, shift] each: [labelHTML, action]
+const K=(cls,m,a,s)=>({cls,m,a,s});
+const KEYS=[
+  K("altk",["ALT","ALT"],null,null),
+  K("shiftk",["SHIFT","SHIFT"],["FSE","FSE"],null),
+  K("ctl",["DEL","DEL"],["DIGS","DIGS"],null),
+  K("ctl",['<span class="bsg">⌫</span>BS',"BS"],["DRG","DRG"],null),
+  K("ctl clrk",["CLR","CLR"],["MENU","MENU"],null),
+
+  K("nav",["△","HOME"],["DEC","B10"],["Hist","HIST"]),
+  K("nav",["▲","UP"],["HEX","B16"],null),
+  K("nav",["▼","DOWN"],["OCT","B8"],null),
+  K("nav",["◀","LEFT"],["BIN","B2"],["◀ENG","ENGL"]),
+  K("nav",["▶","RIGHT"],["abs","i:abs("],["ENG▶","ENGR"]),
+
+  K("fn",["sin","i:sin("],["sin<sup>-1</sup>","i:sin⁻¹("],["sinh","i:sinh("]),
+  K("fn",["cos","i:cos("],["cos<sup>-1</sup>","i:cos⁻¹("],["cosh","i:cosh("]),
+  K("fn",["tan","i:tan("],["tan<sup>-1</sup>","i:tan⁻¹("],["tanh","i:tanh("]),
+  K("fn",["log","i:log("],["10<sup>x</sup>","i:1|0|^|("],["log₂","i:log₂("]),
+  K("fn",["ln","i:ln("],["e<sup>x</sup>","i:e|^|("],["e","i:e"]),
+
+  K("fn",["x<sup>2</sup>","i:²"],["x<sup>-1</sup>","i:⁻¹"],["x<sup>3</sup>","i:³"]),
+  K("fn",["x<sup>y</sup>","i:^"],["<sup>x</sup>√","i:ˣ√"],null),
+  K("fn",["√","i:√("],["∛","i:∛("],null),
+  K("fn",["π","i:π"],["n!","i:!"],["Ran#","i:Ran#"]),
+  K("fn",["°′″","DMSIN"],["H:M:S⇄","DMS"],null),
+
+  K("num",["7","d:7"],["Const","CONST"],null),
+  K("num",["8","d:8"],null,null),
+  K("num",["9","d:9"],["Mod","i:Mod"],null),
+  K("fn",["(","i:("],["Pol","i:Pol("],null),
+  K("fn",[")","i:)"],["Rec","i:Rec("],[",","i:,"]),
+
+  K("num",["4","d:4"],null,["D","h:D"]),
+  K("num",["5","d:5"],null,["E","h:E"]),
+  K("num",["6","d:6"],null,["F","h:F"]),
+  K("op",["×","i:×"],["nPr","i:nPr"],null),
+  K("op",["÷","i:÷"],["nCr","i:nCr"],null),
+
+  K("num",["1","d:1"],null,["A","h:A"]),
+  K("num",["2","d:2"],null,["B","h:B"]),
+  K("num",["3","d:3"],null,["C","h:C"]),
+  K("op",["+","i:+"],["%","i:%"],["M+","MPLUS"]),
+  K("op",["−","i:−"],["(−)","i:⁻"],["M−","MMINUS"]),
+
+  K("num",["0","d:0"],null,["MC","MC"]),
+  K("num",["·","d:."],null,["M","STO"]),
+  K("fn",["Exp","i:E"],null,["MR","i:M"]),
+  K("fn",["Ans","i:Ans"],["PreAns","i:PreAns"],["Hist","HIST"]),
+  K("eq",["=","EQ"],null,null)
+];
+function drawPad(){
+  const pad=$("pad");pad.innerHTML="";
+  $("app").classList.toggle("mode-alt",alt);
+  $("app").classList.toggle("mode-shift",shift&&!alt);
+  KEYS.forEach((k,i)=>{
+    const b=document.createElement("button");b.type="button";b.className="k "+k.cls;b.dataset.i=i;
+    let main=k.m[0],sw=false,dim=false;
+    if(alt&&k.m[1]!=="ALT"){if(k.a){main=k.a[0];sw=true}else dim=true}
+    else if(shift&&!alt&&k.m[1]!=="SHIFT"){if(k.s){main=k.s[0];sw=true}else dim=true}
+    if(dim&&!["SHIFT","ALT"].includes(k.m[1])) b.classList.add("dim");
+    if((k.m[1]==="ALT"&&alt)||(k.m[1]==="SHIFT"&&shift)) b.classList.add("on");
+    b.innerHTML=(k.a&&!alt?'<span class="la">'+k.a[0]+"</span>":"")+'<span class="lm'+(sw?" sw":"")+'">'+main+"</span>"+(k.s&&!shift?'<span class="ls">'+k.s[0]+"</span>":"");
+    b.setAttribute("aria-label",main.replace(/<[^>]+>/g,""));
+    pad.appendChild(b);
+  });
+}
+$("pad").addEventListener("click",e=>{
+  const b=e.target.closest(".k");if(!b) return;
+  const k=KEYS[+b.dataset.i];
+  if(k.m[1]==="ALT"){alt=!alt;shift=false;drawPad();render();return}
+  if(k.m[1]==="SHIFT"){if(alt){alt=false;drawPad();act("FSE");return}shift=!shift;drawPad();render();return}
+  let a=k.m[1];
+  if(alt){a=k.a?k.a[1]:null}else if(shift){a=k.s?k.s[1]:null}
+  const wasMod=alt||shift;alt=false;shift=false;
+  if(wasMod) drawPad();
+  if(a) act(a);else render();
+});
+$("pad").addEventListener("contextmenu",e=>e.preventDefault());
+
+/* ================= actions ================= */
+const OPLIKE=["+","−","×","÷","^","ˣ√","Mod","nPr","nCr","%","!","²","³","⁻¹","and","or","xor"];
+function insert(arr){
+  if(afterEq&&!tokens.length&&OPLIKE.includes(arr[0])) arr=["Ans",...arr];
+  afterEq=false;
+  tokens.splice(cur,0,...arr);cur+=arr.length;
+}
+function lastEntry(){for(let i=tape.length-1;i>=0;i--) if(!tape[i].sample) return tape[i];return null}
+function evalNow(){
+  if(!tokens.length) return null;
+  const r=evaluate(tokens,S.base);
+  return r;
+}
+function commit(){
+  if(!tokens.length) return;
+  let r;
+  try{r=evaluate(tokens,S.base)}catch(err){
+    const pv=$("prev");if(pv){pv.textContent=err||"式が途中です";pv.className="prev err"}
+    return false;
+  }
+  tape=tape.filter(e=>!e.sample);
+  tape.push({x:tokens.slice(),b:S.base,v:r.v,ex:r.extra,eng:0,dms:false});
+  if(tape.length>200) tape=tape.slice(-200);
+  preAns=ans;ans=r.v;
+  tokens=[];cur=0;afterEq=true;histIdx=null;draft=null;
+  save();return true;
+}
+function memAdd(sign){
+  let v;
+  try{
+    if(tokens.length){const r=evaluate(tokens,S.base);v=r.v;commit()}else v=ans;
+  }catch(err){toast(err||"式が途中です");render();return}
+  const num=x=>typeof x==="bigint"?Number(x):x;
+  if(S.base===10) mem=num(mem)+sign*num(v);
+  else{const b=x=>typeof x==="bigint"?x:BigInt(Math.trunc(x));mem=b(mem)+(sign>0?b(v):-b(v))}
+  save();render();toast("M = "+fmtVal(mem,{}));
+}
+function act(a){
+  if(a.startsWith("d:")){
+    const d=a.slice(2);
+    if(S.base===2&&/[2-9]/.test(d)){toast("BIN では 0 と 1 だけ使えます");return}
+    if(S.base===8&&/[89]/.test(d)){toast("OCT では 0〜7 だけ使えます");return}
+    if(S.base!==10&&d==="."){toast("進数モードでは小数は使えません");return}
+    insert([d]);render();return;
+  }
+  if(a.startsWith("h:")){
+    if(S.base!==16){toast("A〜F は HEX モードで使えます（ALT＋▲）");return}
+    insert([a.slice(2)]);render();return;
+  }
+  if(a.startsWith("i:")){insert(a.slice(2).split("|"));render();return}
+  switch(a){
+    case "EQ": commit();render();return;
+    case "DEL": if(cur<tokens.length) tokens.splice(cur,1);render();return;
+    case "BS": if(cur>0){tokens.splice(cur-1,1);cur--}render();return;
+    case "CLR":
+      if(tokens.length||histIdx!==null){tokens=[];cur=0;histIdx=null;draft=null;render();return}
+      if(tape.length){tape=[];afterEq=false;save();render();toast("テープを消去しました")}
+      return;
+    case "HOME": cur=cur===0?tokens.length:0;render();return;
+    case "LEFT": cur=Math.max(0,cur-1);render();return;
+    case "RIGHT": cur=Math.min(tokens.length,cur+1);render();return;
+    case "UP":{
+      const real=tape.map((e,i)=>e.sample?-1:i).filter(i=>i>=0);if(!real.length) return;
+      if(histIdx===null){draft={t:tokens.slice(),c:cur};histIdx=real[real.length-1]}
+      else{const k=real.indexOf(histIdx);if(k>0) histIdx=real[k-1]}
+      tokens=tape[histIdx].x.slice();cur=tokens.length;afterEq=false;render();return;
+    }
+    case "DOWN":{
+      if(histIdx===null) return;
+      const real=tape.map((e,i)=>e.sample?-1:i).filter(i=>i>=0),k=real.indexOf(histIdx);
+      if(k>=0&&k<real.length-1){histIdx=real[k+1];tokens=tape[histIdx].x.slice();cur=tokens.length}
+      else{histIdx=null;tokens=draft?draft.t:[];cur=draft?draft.c:0;draft=null}
+      render();return;
+    }
+    case "FSE":{const o=["Normal","Fix","Sci","Eng"];S.fse=o[(o.indexOf(S.fse)+1)%4];resetView();save();render();toast("表示形式："+S.fse+(S.fse==="Normal"?"":" "+S.digs));return}
+    case "DIGS": openSheet("digs");return;
+    case "DRG":{const o=["DEG","RAD","GRA"];S.drg=o[(o.indexOf(S.drg)+1)%3];save();render();toast("角度単位："+S.drg);return}
+    case "MENU": openSheet("menu");return;
+    case "B10":case "B16":case "B8":case "B2": setBase(+a.slice(1));return;
+    case "ENGL":case "ENGR":{
+      const e=lastEntry();if(!e||typeof e.v!=="number"||S.base!==10) return;
+      e.dms=false;e.eng+=(a==="ENGL"?1:-1);render();return;
+    }
+    case "DMSIN":{
+      // 直前のトークンを見て ° → ′ → ″ の順に入れる
+      const before=tokens.slice(0,cur);const used=before.filter(t=>DMS.includes(t));
+      const lastSym=[...before].reverse().find(t=>DMS.includes(t)||["+","−","×","÷","(",")"].includes(t));
+      let sym="°";
+      if(lastSym==="°") sym="′";else if(lastSym==="′") sym="″";
+      if(!before.length||!/[0-9.]/.test(before[before.length-1])){toast("数値のあとに押してください");return}
+      insert([sym]);render();return;
+    }
+    case "DMS":{
+      const e=lastEntry();if(!e||typeof e.v!=="number"||S.base!==10) return;
+      e.eng=0;e.dms=!e.dms;render();return;
+    }
+    case "CONST": openSheet("const");return;
+    case "HIST": openSheet("hist");return;
+    case "MPLUS": memAdd(1);return;
+    case "MMINUS": memAdd(-1);return;
+    case "MC": mem=0;save();render();toast("メモリーをクリアしました");return;
+    case "STO":{
+      let v;try{if(tokens.length){v=evaluate(tokens,S.base).v;commit()}else v=ans}catch(err){toast(err||"式が途中です");return}
+      mem=v;save();render();toast("M = "+fmtVal(mem,{}));return;
+    }
+  }
+}
+function resetView(){tape.forEach(e=>{e.eng=0;e.dms=false})}
+function setBase(b){
+  S.base=b;resetView();
+  if(b!==10) tokens=tokens.filter(t=>!(t==="."));
+  save();render();toast(BASENAME[b]+" モード");
+}
+
+/* ================= tape interactions ================= */
+$("tape").addEventListener("click",e=>{
+  if(String(getSelection()||"").length) return;   // 長押しで文字を選択中
+  const t=e.target;
+  const curEl=t.closest("#cur");
+  if(curEl){
+    const s=t.closest(".t");
+    if(s){const i=+s.dataset.i,rc=s.getBoundingClientRect();cur=(e.clientX<rc.left+rc.width/2)?i:i+1}
+    else cur=tokens.length;
+    render();return;
+  }
+  const ent=t.closest(".ent");if(!ent) return;
+  const i=+ent.dataset.i,en=tape[i];if(!en) return;
+  if(t.closest(".rs")){
+    const s=rawVal(en.v);if(s===null){toast("この値は挿入できません");return}
+    if(afterEq&&!tokens.length) afterEq=false;
+    tokens.splice(cur,0,...strToTokens(s));cur+=strToTokens(s).length;render();return;
+  }
+  if(t.closest(".ex")){
+    if(en.sample) return;
+    if(histIdx===null) draft={t:tokens.slice(),c:cur};
+    histIdx=i;tokens=en.x.slice();cur=tokens.length;afterEq=false;render();
+  }
+});
+$("indFse").onclick=()=>act("FSE");
+$("indBase").onclick=()=>{const o=[10,16,8,2];setBase(o[(o.indexOf(S.base)+1)%4])};
+$("indDrg").onclick=()=>act("DRG");
+$("pasteBtn").onclick=()=>{
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(t=>{if(t) doPaste(t);else openSheet("paste")}).catch(()=>openSheet("paste"));
+  }else openSheet("paste");
+};
+// 入力行は貼り付けだけ受け付け、直接の書き換えは止める
+$("tape").addEventListener("beforeinput",e=>{if(e.target.closest&&e.target.closest("#cur")) e.preventDefault()});
+$("tape").addEventListener("drop",e=>e.preventDefault());
+$("tape").addEventListener("input",()=>render());
+$("resetBtn").onclick=()=>{S.fse="Normal";S.base=10;S.drg="DEG";resetView();save();render();toast("Normal・DEC・DEG に戻しました")};
+$("menuBtn").onclick=()=>sheetOpen==="menu"?closeSheet():openSheet("menu");
+
+/* ================= paste ================= */
+const PTOK=[...Object.keys(FN1),...FN2,"not(","PreAns","Ans","Ran#","Mod","nPr","nCr","and","xor","or","⁻¹","ˣ√","π","^","×","÷","+","−","(",")",",","!","%","²","³","°","′","″","E","e","M"]
+  .sort((a,b)=>b.length-a.length);
+function parsePaste(text){
+  let s=String(text).replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/　/g," ");
+  if(s.includes("=")) s=s.slice(s.lastIndexOf("=")+1);
+  s=s.replace(/\s+/g,"");
+  s=s.replace(/(\d),(?=\d{3}(?!\d))/g,"$1");
+  s=s.replace(/[×xX]10\^/g,"E").replace(/ᴇ/g,"E").replace(/(\d)e([+\-−]?\d)/g,"$1E$2");
+  s=s.replace(/\*\*/g,"^").replace(/\*/g,"×").replace(/\//g,"÷").replace(/[-‐‑–]/g,"−");
+  s=s.replace(/sqrt\(/gi,"√(").replace(/√(?!\()/g,"√(").replace(/asin\(/gi,"sin⁻¹(").replace(/acos\(/gi,"cos⁻¹(").replace(/atan\(/gi,"tan⁻¹(").replace(/pi/gi,"π");
+  const out=[];let skipped=0,i=0;
+  while(i<s.length){
+    const c=s[i];
+    if(/[0-9.]/.test(c)){out.push(c);i++;continue}
+    if(S.base===16&&/[A-Fa-f]/.test(c)&&!/^(Ans|E[0-9+\-−])/.test(s.slice(i))){out.push(c.toUpperCase());i++;continue}
+    const m=PTOK.find(t=>s.startsWith(t,i));
+    if(m){
+      if(m==="−"&&(out.length===0||["(","×","÷","^",",","E"].includes(out[out.length-1]))) out.push(out[out.length-1]==="E"?"−":"⁻");
+      else if(m==="+"&&out[out.length-1]==="E"){}
+      else out.push(m);
+      i+=m.length;continue;
+    }
+    skipped++;i++;
+  }
+  return {out,skipped};
+}
+function doPaste(text){
+  const {out,skipped}=parsePaste(text);
+  if(!out.length){toast("貼り付けられる数式がありませんでした");return false}
+  insert(out);render();
+  toast(skipped?"貼り付けました（読めない文字を "+skipped+" 個とばしました）":"貼り付けました");
+  return true;
+}
+document.addEventListener("paste",e=>{
+  if(e.target.closest&&e.target.closest("textarea,input")) return;
+  const t=e.clipboardData&&e.clipboardData.getData("text");if(t){e.preventDefault();doPaste(t)}
+});
+function copyText(s){
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(()=>toast("コピーしました："+s),()=>toast("コピーできませんでした。表示部を長押しして選択してください"));
+  else toast("表示部を長押しして選択してください");
+}
+
+/* ================= sheets ================= */
+function closeSheet(){sheetOpen=null;$("sheet").hidden=true;$("pad").hidden=false;render()}
+function openSheet(kind){
+  const sh=$("sheet"),pad=$("pad");
+  const hgt=Math.max(260,pad.offsetHeight||360);
+  sheetOpen=kind;pad.hidden=true;sh.hidden=false;sh.style.height=hgt+"px";
+  const head=(title)=>'<div class="sh-head"><span>'+title+'</span><button type="button" data-a="close">キーに戻る</button></div>';
+  const chip=(label,a,on,sub)=>'<button type="button" class="chip'+(on?" on":"")+'" data-a="'+a+'">'+label+(sub?"<small>"+sub+"</small>":"")+"</button>";
+  let b="";
+  if(kind==="menu"){
+    b+=head("MENU")+'<div class="sh-body">';
+    b+='<div class="sh-sec"><h3>操作</h3><div class="chips">'+chip("貼り付け","paste")+chip("最後の答えをコピー","copyans")+chip("式をコピー","copyexpr")+chip("定数","const")+chip("履歴","hist")+"</div></div>";
+    b+='<div class="sh-sec"><h3>表示形式（FSE）</h3><div class="chips">'+["Normal","Fix","Sci","Eng"].map(f=>chip(f,"fse:"+f,S.fse===f)).join("")+chip("桁数 "+S.digs,"digs")+"</div></div>";
+    b+='<div class="sh-sec"><h3>角度単位（DRG）</h3><div class="chips">'+["DEG","RAD","GRA"].map(f=>chip(f,"drg:"+f,S.drg===f)).join("")+"</div></div>";
+    b+='<div class="sh-sec"><h3>進数</h3><div class="chips">'+[10,16,8,2].map(f=>chip(BASENAME[f],"base:"+f,S.base===f)).join("")+"</div></div>";
+    b+='<div class="sh-sec"><h3>関数</h3><div class="chips">'+
+      [["sinh","sinh("],["cosh","cosh("],["tanh","tanh("],["sinh⁻¹","sinh⁻¹("],["cosh⁻¹","cosh⁻¹("],["tanh⁻¹","tanh⁻¹("],["abs","abs("],["int","int("],["frac","frac("],["log₂","log₂("],["gcd","gcd("],["lcm","lcm("],["Pol","Pol("],["Rec","Rec("],["Mod","Mod"],["ˣ√","ˣ√"],["x³","³"],["Ran#","Ran#"],["PreAns","PreAns"],[",",","]]
+      .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
+    b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
+    b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
+    b+='<p class="note">入力中の行を長押しすると「ペースト」で式や数値を貼り付けられます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+="</div>";
+  }else if(kind==="digs"){
+    b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+
+      [0,1,2,3,4,5,6,7,8,9].map(n=>chip(String(n),"digs:"+n,S.digs===n)).join("")+"</div></div></div>";
+  }else if(kind==="const"){
+    b+=head("定数（CODATA 2018）")+'<div class="sh-body"><ul class="list">'+
+      Object.entries(CONSTS).map(([k,c])=>'<li><button type="button" class="main" data-a="ins:κ'+k+'"><span class="a">'+c.l+" = "+c.v+'</span><span class="b">'+c.n+"［"+c.u+"］</span></button></li>").join("")+"</ul></div>";
+  }else if(kind==="hist"){
+    const real=tape.map((e,i)=>[e,i]).filter(([e])=>!e.sample).reverse();
+    b+=head("履歴（"+real.length+"件）")+'<div class="sh-body">';
+    if(!real.length) b+='<p class="empty">まだ履歴はありません。「=」で計算するとテープに残ります。</p>';
+    else b+='<ul class="list">'+real.map(([e,i])=>'<li><button type="button" class="main" data-a="load:'+i+'"><span class="a">'+exprHTML(e.x)+'</span><span class="b">'+result(e).replace(/<[^>]+>/g," ")+'</span></button><button type="button" class="btnx" data-a="del:'+i+'">削除</button></li>').join("")+"</ul>";
+    b+="</div>";
+  }else if(kind==="paste"){
+    b+=head("貼り付け")+'<div class="sh-body"><textarea class="paste" id="pasteBox" placeholder="ここをタップして「ペースト」" aria-label="貼り付ける式"></textarea>'+
+      '<div class="chips">'+chip("式に入れる","pastego")+'</div><p class="note">欄をタップすると「ペースト」が出ます。ペーストすると自動で式に入ります。* / - や sqrt( などの表記、1.5E-3 のような指数表記、桁区切りのカンマも読み取ります。</p></div>';
+  }
+  sh.innerHTML=b;
+  if(kind==="paste"){
+    const pb=$("pasteBox");
+    pb.addEventListener("paste",e=>{const t=e.clipboardData&&e.clipboardData.getData("text");if(t){e.preventDefault();if(doPaste(t)) closeSheet()}});
+    try{pb.focus()}catch(_){}
+  }
+}
+$("sheet").addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b) return;
+  const a=b.dataset.a;
+  if(a==="close"){closeSheet();return}
+  if(a.startsWith("ins:")){insert([a.slice(4)]);closeSheet();return}
+  if(a.startsWith("fse:")){S.fse=a.slice(4);resetView();save();openSheet("menu");render();return}
+  if(a.startsWith("drg:")){S.drg=a.slice(4);save();openSheet("menu");render();return}
+  if(a.startsWith("base:")){setBase(+a.slice(5));openSheet("menu");return}
+  if(a.startsWith("digs:")){S.digs=+a.slice(5);resetView();save();closeSheet();toast("桁数："+S.digs);return}
+  if(a.startsWith("load:")){const i=+a.slice(5);if(histIdx===null) draft={t:tokens.slice(),c:cur};histIdx=i;tokens=tape[i].x.slice();cur=tokens.length;afterEq=false;closeSheet();return}
+  if(a.startsWith("del:")){tape.splice(+a.slice(4),1);if(histIdx!==null) histIdx=null;save();openSheet("hist");return}
+  switch(a){
+    case "digs": openSheet("digs");return;
+    case "const": openSheet("const");return;
+    case "hist": openSheet("hist");return;
+    case "paste": openSheet("paste");return;
+    case "pastego":{const v=$("pasteBox").value;if(v&&doPaste(v)) closeSheet();return}
+    case "copyans":{const e=lastEntry();if(!e){toast("まだ答えがありません");return}copyText(fmtVal(e.v,e).replace(/（DEC）$/,""));return}
+    case "copyexpr":{const x=tokens.length?tokens:(lastEntry()||{x:[]}).x;if(!x.length){toast("式がありません");return}
+      copyText(x.map(t=>t==="E"?"E":t==="⁻"?"-":t==="²"?"²":t[0]==="κ"?(CONSTS[t.slice(1)]||{}).l:t).join(""));return}
+    case "sep": S.sep=!S.sep;save();openSheet("menu");render();return;
+    case "clearall":{
+      $("confirmArea").innerHTML='<div class="chips" style="margin-top:6px"><span class="note" style="align-self:center">テープをすべて消しますか？</span>'+chip("消す","clearyes")+chip("やめる","clearno")+"</div>";return;
+    }
+    case "clearyes": tape=[];histIdx=null;save();closeSheet();toast("テープを消去しました");return;
+    case "clearno": $("confirmArea").innerHTML="";return;
+  }
+});
+
+/* ================= hardware keyboard ================= */
+document.addEventListener("keydown",e=>{
+  if(e.target.closest&&e.target.closest("textarea,input")) return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if(sheetOpen&&e.key==="Escape"){closeSheet();return}
+  const m={"*":"i:×","/":"i:÷","-":"i:−","+":"i:+","^":"i:^","(":"i:(",")":"i:)",",":"i:,","!":"i:!","%":"i:%",
+    "Enter":"EQ","=":"EQ","Backspace":"BS","Delete":"DEL","Escape":"CLR","ArrowLeft":"LEFT","ArrowRight":"RIGHT","ArrowUp":"UP","ArrowDown":"DOWN","Home":"HOME"};
+  let a=null;
+  if(/^[0-9.]$/.test(e.key)) a="d:"+e.key;
+  else if(/^[a-fA-F]$/.test(e.key)&&S.base===16) a="h:"+e.key.toUpperCase();
+  else a=m[e.key];
+  if(a){e.preventDefault();act(a)}
+});
+
+load();drawPad();render();
+})();
+</script>
+
+<script>
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){})}
+</script>
+</body>
+</html>

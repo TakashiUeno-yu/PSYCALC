@@ -657,6 +657,10 @@ $("pad").addEventListener("click",e=>{
   if(a) act(a);else render();
 });
 $("pad").addEventListener("contextmenu",e=>e.preventDefault());
+// ペーストのメニューが出たままでも、キーを押したら閉じてそのキーを効かせる
+function dropPasteFocus(){const a=document.activeElement;if(a&&a.id==="pz"){try{a.blur()}catch(_){}}try{const s=getSelection();if(s&&s.rangeCount&&s.anchorNode&&$("tape").contains(s.anchorNode)) s.removeAllRanges()}catch(_){}}
+$("pad").addEventListener("pointerdown",dropPasteFocus);
+$("pad").addEventListener("touchstart",dropPasteFocus,{passive:true});
 
 /* ================= actions ================= */
 const OPLIKE=["+","−","×","÷","^","ˣ√","Mod","nPr","nCr","%","!","²","³","⁻¹","and","or","xor"];
@@ -882,7 +886,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v1.6（2026-10-21）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v1.7（2026-10-21）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

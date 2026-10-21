@@ -72,7 +72,10 @@ body{font-family:var(--sans);-webkit-tap-highlight-color:transparent;overscroll-
 .ind{flex-wrap:nowrap;gap:3px}
 .ind button{padding:2px 4px}
 .ind .pastebtn,.ind .reset{padding:2px 5px}
-.pz{flex:1 0 64px;width:100%;box-sizing:border-box;margin:0;padding:0;border:0;background:transparent;color:transparent;caret-color:transparent;resize:none;outline:none;font-size:16px;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+.edit{position:relative;flex:1 0 auto;min-height:120px;display:flex;flex-direction:column}
+.edit .cur,.edit .prev{position:relative;z-index:1;pointer-events:none}
+.edit .cur .t,.edit .cur .caret{pointer-events:auto}
+.pz{position:absolute;inset:0;z-index:0;width:100%;height:100%;box-sizing:border-box;margin:0;padding:84px 4px 0;border:0;background:transparent;color:transparent;caret-color:transparent;resize:none;outline:none;font-size:16px;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 .pz::placeholder{color:var(--lcd-dim);opacity:.7;font-family:var(--sans);font-size:13px}
 .tape{display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:0 12px 10px;font-family:var(--mono);user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;overscroll-behavior:contain}
 .ent{padding:3px 4px;border-radius:6px}
@@ -561,7 +564,7 @@ function render(){
     try{const r=evaluate(tokens,S.base);const only=tokens.every(t=>/^[0-9.A-F]$/.test(t));if(!only) pv="= "+fmtVal(r.v,{})}
     catch(err){if(err&&!/途中|かっこ/.test(err)){pv=err;pe=true}}
   }
-  tp.innerHTML='<div>'+h+c+'<div class="prev'+(pe?" err":"")+'" id="prev">'+pv+'</div></div><textarea class="pz" id="pz" inputmode="none" rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="ここを長押し →「ペースト」" aria-label="ここを長押ししてペースト"></textarea>';
+  tp.innerHTML='<div>'+h+'</div><div class="edit">'+c+'<div class="prev'+(pe?" err":"")+'" id="prev">'+pv+'</div><textarea class="pz" id="pz" inputmode="none" rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="ここを長押し →「ペースト」" aria-label="ここを長押ししてペースト"></textarea></div>';
   if(histIdx!==null){const hi=tp.querySelector(".ent.hi");if(hi) hi.scrollIntoView({block:"nearest"})}
   else tp.scrollTop=tp.scrollHeight;
   $("indFse").textContent=S.fse==="Normal"?"Normal":S.fse+" "+S.digs;
@@ -773,6 +776,7 @@ function setBase(b){
 $("tape").addEventListener("click",e=>{
   if(String(getSelection()||"").length) return;   // 長押しで文字を選択中
   const t=e.target;
+  if(t.id==="pz"){if(cur!==tokens.length){cur=tokens.length;render()}return}
   const curEl=t.closest("#cur");
   if(curEl){
     const s=t.closest(".t");
@@ -878,7 +882,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v1.5（2026-10-21）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v1.6（2026-10-21）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

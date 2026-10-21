@@ -14,7 +14,7 @@
 <style>
 html{height:100%;color-scheme:light}
 body{margin:0;position:fixed;inset:0;overflow:hidden;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);font:14px/1.5 system-ui,-apple-system,sans-serif}
-@media (display-mode:standalone){body{padding-top:calc(env(safe-area-inset-top,0px) + 10px)}}
+@media (display-mode:standalone){body{padding-top:calc(env(safe-area-inset-top,0px) + 34px);padding-bottom:0}}
 img{max-width:100%}
 [hidden]{display:none!important}
 </style>
@@ -894,7 +894,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v2.1（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v2.2（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+
@@ -968,19 +968,6 @@ load();drawPad();render();
 
 <script>
 if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){})}
-// ホーム画面から起動したとき、iPhone は画面の高さをステータスバーの分だけ短く報告することがある。
-// その場合は画面全体の高さを直接使い、下に余白が残らないようにする。
-(function(){
-  var sa=navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
-  if(!sa) return;
-  function fit(){
-    var portrait=window.matchMedia&&matchMedia("(orientation: portrait)").matches;
-    var H=portrait?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
-    var b=document.body;
-    if(H>window.innerHeight+1){b.style.bottom="auto";b.style.height=H+"px"}else{b.style.bottom="";b.style.height=""}
-  }
-  fit();addEventListener("resize",fit);addEventListener("orientationchange",function(){setTimeout(fit,300)});
-})();
 </script>
 </body>
 </html>

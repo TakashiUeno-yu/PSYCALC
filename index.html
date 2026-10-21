@@ -155,6 +155,9 @@ textarea.paste{font:inherit;font-family:var(--mono);font-size:16px;min-height:80
 .k{height:var(--kh);flex-direction:column;align-items:stretch;justify-content:space-between;padding:3px 6px;font-size:calc(var(--kh)*.36)}
 .k .la,.k .ls{position:static;display:block;height:1em;line-height:1;font-size:max(10.5px,calc(var(--kh)*.22))}
 .k .la sup,.k .ls sup{font-size:.8em;vertical-align:.4em;line-height:0}
+/* ALT/SHIFT 中は入れ替わった表示を全キー同じ大きさにし、上付きも読める大きさに */
+.k .lm.sw{font-size:calc(var(--kh)*.36);font-weight:600}
+.k .lm sup{font-size:.72em;vertical-align:.45em;line-height:0}
 .k .big{font-size:1.2em;letter-spacing:.02em;position:relative;top:.22em}
 .k .la{text-align:left}
 .k .ls{text-align:right}
@@ -642,7 +645,7 @@ function drawPad(){
     else if(shift&&!alt&&k.m[1]!=="SHIFT"){if(k.s){main=k.s[0];sw=true}else dim=true}
     if(dim&&!["SHIFT","ALT"].includes(k.m[1])) b.classList.add("dim");
     if((k.m[1]==="ALT"&&alt)||(k.m[1]==="SHIFT"&&shift)) b.classList.add("on");
-    b.innerHTML='<span class="la">'+(k.a&&!alt?k.a[0]:"")+'</span><span class="lm'+(sw?" sw":"")+'">'+main+'</span><span class="ls">'+(k.s&&!shift?k.s[0]:"")+"</span>";
+    b.innerHTML='<span class="la">'+(k.a&&!alt?k.a[0]:"")+'</span><span class="lm'+(sw?" sw":"")+'"><span>'+main+'</span></span><span class="ls">'+(k.s&&!shift?k.s[0]:"")+"</span>";
     b.setAttribute("aria-label",main.replace(/<[^>]+>/g,""));
     pad.appendChild(b);
   });
@@ -896,7 +899,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v2.4（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v2.5（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+

@@ -202,7 +202,7 @@ const $=id=>document.getElementById(id);
 
 /* ================= state ================= */
 const STORE="psycalc.v1";
-let S={fse:"Normal",digs:5,drg:"DEG",base:10,sep:false};
+let S={fse:"Normal",digs:5,drg:"DEG",base:10,sep:true,sepV:1};
 let tape=[];               // {x:[tokens], b:base, v:value(Number|BigInt), ex:extra, eng:0, dms:false, sample?}
 let ans=0, preAns=0, mem=0;
 let tokens=[], cur=0, alt=false, shift=false, afterEq=false, histIdx=null, draft=null, sheetOpen=null;
@@ -217,7 +217,8 @@ function load(){
   let d=null;
   try{d=JSON.parse(localStorage.getItem(STORE)||"null")}catch(e){}
   if(d){
-    Object.assign(S,d.S||{});ans=dec_(d.ans)??0;preAns=dec_(d.preAns)??0;mem=dec_(d.mem)??0;
+    Object.assign(S,d.S||{});
+    if(!d.S||d.S.sepV!==1){S.sep=true;S.sepV=1}  // v2.8 から桁区切りを標準でオンans=dec_(d.ans)??0;preAns=dec_(d.preAns)??0;mem=dec_(d.mem)??0;
     tape=(d.tape||[]).map(e=>({x:e.x,b:e.b,v:dec_(e.v),ex:e.ex,eng:0,dms:false}));
     return;
   }
@@ -547,7 +548,21 @@ function tokHTML(t){
   return t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
 }
 const tokClass=t=>isFnTok(t)||["Ans","PreAns","Ran#","M"].includes(t)?" fnt":"";
-const exprHTML=x=>x.map(tokHTML).join("");
+// 式の中の整数部分に3桁ごとのカンマを表示する位置（表示だけで、式の中身には入れない）
+function sepMarks(x){
+  const m=new Set();if(!S.sep||S.base!==10) return m;
+  let i=0;
+  while(i<x.length){
+    if(/^[0-9.]$/.test(x[i])){
+      let j=i;while(j<x.length&&/^[0-9.]$/.test(x[j]))j++;
+      const afterE=i>0&&(x[i-1]==="E"||((x[i-1]==="−"||x[i-1]==="⁻"||x[i-1]==="+")&&i>1&&x[i-2]==="E"));
+      if(!afterE){let e=i;while(e<j&&x[e]!==".")e++;const n=e-i;for(let k=0;k<n-1;k++) if((n-1-k)%3===0) m.add(i+k)}
+      i=j;
+    }else i++;
+  }
+  return m;
+}
+const exprHTML=x=>{const m=sepMarks(x);return x.map((t,i)=>tokHTML(t)+(m.has(i)?",":"")).join("")};
 
 /* ================= render ================= */
 function result(e){
@@ -566,9 +581,10 @@ function render(){
        '<div class="rs">'+result(e)+"</div></div>";
   });
   let c='<div class="cur" id="cur" aria-label="入力中の式">';
+  const marks=sepMarks(tokens);
   tokens.forEach((t,i)=>{
     if(i===cur) c+='<span class="caret"></span>';
-    c+='<span class="t'+tokClass(t)+'" data-i="'+i+'">'+tokHTML(t)+"</span>";
+    c+='<span class="t'+tokClass(t)+'" data-i="'+i+'">'+tokHTML(t)+"</span>"+(marks.has(i)?'<span class="cm">,</span>':"");
   });
   if(cur===tokens.length) c+='<span class="caret"></span>';
   c+="</div>";
@@ -915,7 +931,7 @@ function openSheet(kind){
       .map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>論理演算（HEX・OCT・BIN）</h3><div class="chips">'+[["and","and"],["or","or"],["xor","xor"],["not","not("]].map(f=>chip(f[0],"ins:"+f[1])).join("")+"</div></div>";
     b+='<div class="sh-sec"><h3>設定</h3><div class="chips">'+chip("桁区切り（1,234）","sep",S.sep)+chip("テープを全消去","clearall")+'</div><div id="confirmArea"></div></div>';
-    b+='<p class="note">PSYCALC v2.7（2026-10-22）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
+    b+='<p class="note">PSYCALC v2.8（2026-10-27）</p><p class="note">「COPY」で入力中の式（空なら最後の答え）をコピー、「PASTE」で貼り付けます。表示部の式や答えは長押しで選択してコピーできます。過去の式をタップすると再編集、答えをタップするとカーソル位置に挿入します。</p>';
     b+="</div>";
   }else if(kind==="digs"){
     b+=head("桁数（DIGS）")+'<div class="sh-body"><div class="sh-sec"><h3>Fix：小数点以下の桁数　Sci・Eng：有効桁数（0 は 10 桁）</h3><div class="chips">'+
